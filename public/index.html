@@ -102,7 +102,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    padding: 1.1rem 1.25rem;
+    padding: 1.4rem 1.5rem;
     background: var(--surface);
     border: 1px solid var(--line);
     border-left: 5px solid var(--accent);
@@ -111,9 +111,7 @@
     text-decoration: none;
   }
   a.audit:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  a.audit:hover .detail { color: inherit; }
-  .audit .name { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
-  .audit .detail { font-size: 0.9rem; color: var(--muted); }
+  .audit .name { font-size: 2.5rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
   .audit.pending { border-left-color: var(--line); border-style: dashed; border-left-style: solid; cursor: default; }
   .audit.pending .name { color: var(--muted); }
 
@@ -148,7 +146,7 @@
       year: 2026,
       audits: [
         { name: "PwC", tracker: "Movex", url: "https://movex-users.delta-it-tools.workers.dev/" },
-        { name: "BDO", tracker: "Movex", url: "https://bdo-audit-2026.delta-it-tools.workers.dev/" }
+        { name: "BDO", tracker: "Movex", url: null }
       ]
     }
     // { year: 2027, audits: [ { name: "PwC", url: "https://..." }, { name: "BDO", url: "https://..." } ] },
@@ -170,12 +168,14 @@
         card.target = "_blank";
         card.rel = "noopener";
         card.className = "audit";
-        card.innerHTML = `<span class="name"></span><span class="detail">Open ${entry.year} ${a.tracker ? a.tracker + " " : ""}tracker</span>`;
+        card.innerHTML = `<span class="name"></span>`;
+        card.setAttribute("aria-label", `Open ${entry.year} ${a.name} ${a.tracker ? a.tracker + " " : ""}tracker`);
       } else {
         card = document.createElement("div");
         card.className = "audit pending";
         card.setAttribute("aria-disabled", "true");
-        card.innerHTML = `<span class="name"></span><span class="detail">${a.tracker ? a.tracker + " tracker" : "Tracker"} not set up yet</span>`;
+        card.innerHTML = `<span class="name"></span>`;
+        card.title = "Not set up yet";
       }
       card.querySelector(".name").textContent = a.name;
       grid.appendChild(card);
