@@ -1,0 +1,13 @@
+{
+  "name": "audit-access-trackers",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Landing page linking to each year's user access trackers by audit firm",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

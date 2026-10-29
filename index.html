@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>User Access Trackers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF1F4;
+    --surface: #FFFFFF;
+    --ink: #1B2733;
+    --muted: #5B6B7A;
+    --line: #C9D1D9;
+    --accent: #2F5D8A;
+    --accent-ink: #FFFFFF;
+    color-scheme: light;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141A21; --surface: #1C242D; --ink: #E6EBF0; --muted: #93A1AE;
+      --line: #2D3844; --accent: #7FA9D4; --accent-ink: #0F1720;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141A21; --surface: #1C242D; --ink: #E6EBF0; --muted: #93A1AE;
+    --line: #2D3844; --accent: #7FA9D4; --accent-ink: #0F1720;
+    color-scheme: dark;
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  main {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: clamp(2rem, 7vw, 5rem) 1.25rem 4rem;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.4rem;
+  }
+  .lede { color: var(--muted); margin: 0 0 3rem; max-width: 36rem; }
+
+  section + section { margin-top: 2.75rem; }
+  h2 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin: 0 0 0.9rem;
+  }
+  h2 span { color: var(--ink); font-weight: 600; margin-right: 0.4rem; }
+
+  /* Years: the big tabular numerals are the page's one bold move */
+  .years {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
+    border-bottom: 2px solid var(--line);
+  }
+  .year {
+    appearance: none;
+    background: none;
+    border: 0;
+    border-bottom: 4px solid transparent;
+    margin-bottom: -2px;
+    padding: 0 0 0.35rem;
+    font: inherit;
+    font-size: clamp(3.5rem, 13vw, 6.5rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--line);
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  .year:hover { color: var(--muted); }
+  .year[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+  .year:focus-visible, .audit:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  .audits { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+  .audit {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--accent);
+    border-radius: 6px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  a.audit:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  a.audit:hover .detail { color: inherit; }
+  .audit .name { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+  .audit .detail { font-size: 0.9rem; color: var(--muted); }
+  .audit.pending { border-left-color: var(--line); border-style: dashed; border-left-style: solid; cursor: default; }
+  .audit.pending .name { color: var(--muted); }
+
+  .placeholder { color: var(--muted); margin: 0; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>User access trackers</h1>
+  <p class="lede">Pick the audit year, then the audit firm, to open its user access tracker.</p>
+
+  <section aria-labelledby="year-heading">
+    <h2 id="year-heading"><span>1</span>Year</h2>
+    <div class="years" id="years"></div>
+  </section>
+
+  <section aria-labelledby="audit-heading">
+    <h2 id="audit-heading"><span>2</span>Audit</h2>
+    <div id="audits"><p class="placeholder">Choose a year to see its audits.</p></div>
+  </section>
+</main>
+
+<script>
+  /* ------------------------------------------------------------------
+     Add new trackers here. One entry per year; each audit gets a URL,
+     or url: null while that tracker isn’t deployed yet. "tracker" is the
+     system name shown on the card (Movex, etc.); leave it out if not needed.
+     ------------------------------------------------------------------ */
+  const TRACKERS = [
+    {
+      year: 2026,
+      audits: [
+        { name: "PwC", tracker: "Movex", url: "https://movex-users.delta-it-tools.workers.dev/" },
+        { name: "BDO", tracker: "Movex", url: null }
+      ]
+    }
+    // { year: 2027, audits: [ { name: "PwC", url: "https://..." }, { name: "BDO", url: "https://..." } ] },
+  ];
+
+  const yearsEl = document.getElementById("years");
+  const auditsEl = document.getElementById("audits");
+  const sorted = [...TRACKERS].sort((a, b) => b.year - a.year);
+
+  function renderAudits(entry) {
+    auditsEl.innerHTML = "";
+    const grid = document.createElement("div");
+    grid.className = "audits";
+    entry.audits.forEach(a => {
+      let card;
+      if (a.url) {
+        card = document.createElement("a");
+        card.href = a.url;
+        card.target = "_blank";
+        card.rel = "noopener";
+        card.className = "audit";
+        card.innerHTML = `<span class="name"></span><span class="detail">Open ${entry.year} ${a.tracker ? a.tracker + " " : ""}tracker</span>`;
+      } else {
+        card = document.createElement("div");
+        card.className = "audit pending";
+        card.setAttribute("aria-disabled", "true");
+        card.innerHTML = `<span class="name"></span><span class="detail">${a.tracker ? a.tracker + " tracker" : "Tracker"} not set up yet</span>`;
+      }
+      card.querySelector(".name").textContent = a.name;
+      grid.appendChild(card);
+    });
+    auditsEl.appendChild(grid);
+  }
+
+  function selectYear(year) {
+    const entry = sorted.find(t => t.year === year);
+    if (!entry) return;
+    yearsEl.querySelectorAll(".year").forEach(b =>
+      b.setAttribute("aria-pressed", String(Number(b.dataset.year) === year)));
+    renderAudits(entry);
+    if (location.hash !== "#y" + year) history.replaceState(null, "", "#y" + year);
+  }
+
+  sorted.forEach(t => {
+    const b = document.createElement("button");
+    b.className = "year";
+    b.type = "button";
+    b.dataset.year = t.year;
+    b.textContent = t.year;
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", () => selectYear(t.year));
+    yearsEl.appendChild(b);
+  });
+
+  function fromHash() {
+    const m = location.hash.match(/^#y(\d{4})$/);
+    if (m) selectYear(Number(m[1]));
+    else if (sorted.length === 1) selectYear(sorted[0].year);
+  }
+  window.addEventListener("hashchange", fromHash);
+  fromHash();
+</script>
+</body>
+</html>
